@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>timebomb.dev</title>
+  <style>
+    body {
+      background-color: #0d1116;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 80vh;
+    }
+
+    .terminal {
+      padding: 20px;
+      border-radius: 10px;
+      background-color: #161b22;
+      color: #fff;
+      font-family: 'Roboto Mono', monospace;
+      user-select: none;
+    }
+
+    .terminal:hover {
+      cursor: pointer;
+      background-color: #30363d;
+    }
+
+    .prefix,
+    .suffix {
+      color: lightgreen;
+    }
+  </style>
+</head>
+<body>
+  <div class="terminal" onclick="copy()">
+    <span class="prefix">$ </span>
+    <span id="command">ssh -t timebomb.dev</span>
+    <span class="suffix"> [join-code]</span>
+  </div>
+  <script>
+    function copy() {
+      const commandText = document.querySelector("#command").textContent;
+      navigator.clipboard.writeText(commandText);
+    }
+  </script>
+</body>
+</html>
