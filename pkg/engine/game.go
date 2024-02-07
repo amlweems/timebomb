@@ -202,18 +202,18 @@ func (g *Game) Cut(src, dst PlayerID, i int) error {
 		// nothing happens
 	}
 
-	// if we've reached the end of the round, deal a new hand
-	cuts := len(g.Cuts)
-	if cuts > 0 && cuts%n == 0 {
-		g.deal()
-		g.Round++
-	}
-
 	// if the game is over, assign the winner
 	if g.Wires == n {
 		g.State = StateDefenderWin
 	} else if g.Bomb || g.Round == 4 {
 		g.State = StateBomberWin
+	}
+
+	// if we've reached the end of the round, deal a new hand
+	cuts := len(g.Cuts)
+	if g.State == StatePlaying && cuts > 0 && cuts%n == 0 {
+		g.deal()
+		g.Round++
 	}
 
 	return nil
