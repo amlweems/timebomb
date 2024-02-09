@@ -11,8 +11,8 @@ import (
 
 var (
 	color = termenv.EnvColorProfile().Color
-	red = termenv.Style{}.Foreground(color("9")).Styled
-	blue = termenv.Style{}.Foreground(color("12")).Styled
+	red   = termenv.Style{}.Foreground(color("9")).Styled
+	blue  = termenv.Style{}.Foreground(color("12")).Styled
 )
 
 type Model struct {
@@ -75,13 +75,13 @@ func (m Model) printLastCuts(sb *strings.Builder, max int) {
 		numCuts = totalCuts
 	}
 
-	for i := totalCuts-numCuts; i < len(m.Game.Cuts); i++ {
+	for i := totalCuts - numCuts; i < len(m.Game.Cuts); i++ {
 		cut := m.Game.Cuts[i]
 		fmt.Fprintf(sb, "%s cut %s: %s\n",
 			m.Game.Players[cut.Source].Name,
 			m.Game.Players[cut.Target].Name,
 			cut.Card)
-	}	
+	}
 }
 
 func (m Model) View() string {
@@ -109,7 +109,7 @@ func (m Model) View() string {
 			fmt.Fprintf(&sb, "Round: %d\n", m.Game.Round+1)
 			m.printLastCuts(&sb, nc%n)
 		}
-		cutsLeft := n-nc%n
+		cutsLeft := n - nc%n
 		if nc > 0 && nc%n == 0 {
 			if m.Game.State == engine.StatePlaying {
 				fmt.Fprintf(&sb, "\nRound: %d\n", m.Game.Round+1)
@@ -125,13 +125,13 @@ func (m Model) View() string {
 		numDefenders, numBombers := m.Game.RolesCount()
 		role := ""
 		switch self.Role {
-			case engine.RoleDefender:
-				role = blue(self.Role.String())
-			case engine.RoleBomber:
-				role = red(self.Role.String())
+		case engine.RoleDefender:
+			role = blue(self.Role.String())
+		case engine.RoleBomber:
+			role = red(self.Role.String())
 		}
 		fmt.Fprintf(&sb, "Role: %s\n", role)
-		fmt.Fprintf(&sb, "Possible roles: %d " + blue("defenders") + ", %d " + red("bombers") + "\n", numDefenders, numBombers)
+		fmt.Fprintf(&sb, "Possible roles: %d "+blue("defenders")+", %d "+red("bombers")+"\n", numDefenders, numBombers)
 		fmt.Fprintf(&sb, "Nippers: %s\n", m.Game.Players[m.Game.Nippers].Name)
 		fmt.Fprintf(&sb, "Wires: %d/%d (%d left)\n", m.Game.Wires, n, n-m.Game.Wires)
 		fmt.Fprintf(&sb, "\nPlayers:\n")
@@ -143,10 +143,10 @@ func (m Model) View() string {
 			if m.Game.State != engine.StatePlaying {
 				playerName = playerName + " (" + player.Role.String() + ")"
 				switch player.Role {
-					case engine.RoleDefender:
-						playerName = blue(playerName)
-					case engine.RoleBomber:
-						playerName = red(playerName)
+				case engine.RoleDefender:
+					playerName = blue(playerName)
+				case engine.RoleBomber:
+					playerName = red(playerName)
 				}
 			}
 			if n := len(playerName); n > maxLength {
@@ -158,22 +158,22 @@ func (m Model) View() string {
 		for id, player := range m.Game.Players {
 			fmt.Fprintf(&sb, " %d. %-*s ", id+1, maxLength, playerNames[id])
 			for i, card := range player.Cards {
-				if id != int(m.Player) &&  m.Game.State == engine.StatePlaying {
+				if id != int(m.Player) && m.Game.State == engine.StatePlaying {
 					card = -1
 				}
 				cardStr := ""
 				switch card {
-					case engine.CardWire:
-						cardStr = blue(card.String())
-					case engine.CardBomb:
-						cardStr = red(card.String())
-					default:
-						cardStr = card.String()
+				case engine.CardWire:
+					cardStr = blue(card.String())
+				case engine.CardBomb:
+					cardStr = red(card.String())
+				default:
+					cardStr = card.String()
 				}
 				if i == m.cc && id == m.pc && m.Game.State == engine.StatePlaying {
 					sb.WriteString("[" + cardStr + "]")
 				} else {
-					sb.WriteString(" " + cardStr+ " ")
+					sb.WriteString(" " + cardStr + " ")
 				}
 			}
 			sb.WriteRune('\n')

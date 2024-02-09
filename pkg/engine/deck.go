@@ -43,10 +43,10 @@ func (g *Game) RolesCount() (int, int) {
 
 	for _, role := range roles {
 		switch role {
-			case RoleDefender:
-				defenders++
-			case RoleBomber:
-				bombers++
+		case RoleDefender:
+			defenders++
+		case RoleBomber:
+			bombers++
 		}
 	}
 
