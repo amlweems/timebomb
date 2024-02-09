@@ -6,13 +6,12 @@ import (
 
 	"github.com/amlweems/timebomb/pkg/engine"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/muesli/termenv"
+	"github.com/charmbracelet/lipgloss"
 )
 
 var (
-	color = termenv.EnvColorProfile().Color
-	red   = termenv.Style{}.Foreground(color("9")).Styled
-	blue  = termenv.Style{}.Foreground(color("12")).Styled
+	red  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("9"))
+	blue = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("12"))
 )
 
 type Model struct {
@@ -126,12 +125,12 @@ func (m Model) View() string {
 		role := ""
 		switch self.Role {
 		case engine.RoleDefender:
-			role = blue(self.Role.String())
+			role = blue.Render(self.Role.String())
 		case engine.RoleBomber:
-			role = red(self.Role.String())
+			role = red.Render(self.Role.String())
 		}
 		fmt.Fprintf(&sb, "Role: %s\n", role)
-		fmt.Fprintf(&sb, "Possible roles: %d "+blue("defenders")+", %d "+red("bombers")+"\n", numDefenders, numBombers)
+		fmt.Fprintf(&sb, "Possible roles: %d "+blue.Render("defenders")+", %d "+red.Render("bombers")+"\n", numDefenders, numBombers)
 		fmt.Fprintf(&sb, "Nippers: %s\n", m.Game.Players[m.Game.Nippers].Name)
 		fmt.Fprintf(&sb, "Wires: %d/%d (%d left)\n", m.Game.Wires, n, n-m.Game.Wires)
 		fmt.Fprintf(&sb, "\nPlayers:\n")
@@ -144,9 +143,9 @@ func (m Model) View() string {
 				playerName = playerName + " (" + player.Role.String() + ")"
 				switch player.Role {
 				case engine.RoleDefender:
-					playerName = blue(playerName)
+					playerName = blue.Render(playerName)
 				case engine.RoleBomber:
-					playerName = red(playerName)
+					playerName = red.Render(playerName)
 				}
 			}
 			if n := len(playerName); n > maxLength {
@@ -164,9 +163,9 @@ func (m Model) View() string {
 				cardStr := ""
 				switch card {
 				case engine.CardWire:
-					cardStr = blue(card.String())
+					cardStr = blue.Render(card.String())
 				case engine.CardBomb:
-					cardStr = red(card.String())
+					cardStr = red.Render(card.String())
 				default:
 					cardStr = card.String()
 				}
@@ -180,10 +179,10 @@ func (m Model) View() string {
 		}
 
 		if m.Game.State == engine.StateBomberWin {
-			sb.WriteString(red("\nBombers win!\n"))
+			sb.WriteString(red.Render("\nBombers win!\n"))
 		}
 		if m.Game.State == engine.StateDefenderWin {
-			sb.WriteString(blue("\nDefenders win!\n"))
+			sb.WriteString(blue.Render("\nDefenders win!\n"))
 		}
 	}
 	if m.err != nil {
