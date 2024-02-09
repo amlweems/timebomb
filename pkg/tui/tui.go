@@ -6,6 +6,13 @@ import (
 
 	"github.com/amlweems/timebomb/pkg/engine"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/muesli/termenv"
+)
+
+var (
+	color = termenv.EnvColorProfile().Color
+	red = termenv.Style{}.Foreground(color("9")).Styled
+	blue = termenv.Style{}.Foreground(color("12")).Styled
 )
 
 type Model struct {
@@ -61,6 +68,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m Model) printLastCuts(sb *strings.Builder, max int) {
+	totalCuts := len(m.Game.Cuts)
+	numCuts := max
+	if max > len(m.Game.Cuts) {
+		numCuts = totalCuts
+	}
+
+	for i := totalCuts-numCuts; i < len(m.Game.Cuts); i++ {
+		cut := m.Game.Cuts[i]
+		fmt.Fprintf(sb, "%s cut %s: %s\n",
+			m.Game.Players[cut.Source].Name,
+			m.Game.Players[cut.Target].Name,
+			cut.Card)
+	}	
+}
+
 func (m Model) View() string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "State: %s\n", m.Game.State)
@@ -73,60 +96,94 @@ func (m Model) View() string {
 	case engine.StatePlaying, engine.StateBomberWin, engine.StateDefenderWin:
 		n := len(m.Game.Players)
 		nc := len(m.Game.Cuts)
-		r := m.Game.Round
-		if nc%n == 0 {
-			r -= 1
-		}
-		if r < 0 {
-			r = 0
-		}
 
-		fmt.Fprintf(&sb, "\nRound: %d\n", 1+r)
-		for i := r*n; i < len(m.Game.Cuts); i++ {
-			cut := m.Game.Cuts[i]
-			fmt.Fprintf(&sb, "%s cut %s: %s\n",
-				m.Game.Players[cut.Source].Name,
-				m.Game.Players[cut.Target].Name,
-				cut.Card)
-		}
+		sb.WriteString("\n")
 		if nc > 0 && nc%n == 0 {
-			fmt.Fprintf(&sb, "Round over.\n")
+			previousRound := m.Game.Round
+			if m.Game.State != engine.StatePlaying {
+				previousRound++
+			}
+			fmt.Fprintf(&sb, "Round %d over!\n", previousRound)
+			m.printLastCuts(&sb, n)
+		} else {
+			fmt.Fprintf(&sb, "Round: %d\n", m.Game.Round+1)
+			m.printLastCuts(&sb, nc%n)
 		}
+		cutsLeft := n-nc%n
+		if nc > 0 && nc%n == 0 {
+			if m.Game.State == engine.StatePlaying {
+				fmt.Fprintf(&sb, "\nRound: %d\n", m.Game.Round+1)
+			} else {
+				cutsLeft = 0
+			}
+		}
+		fmt.Fprintf(&sb, "[%d cuts left]\n", cutsLeft)
+
 		sb.WriteString("\n")
 
 		self := m.Game.Players[m.Player]
-		fmt.Fprintf(&sb, "Role: %s\n", self.Role)
+		numDefenders, numBombers := m.Game.RolesCount()
+		role := ""
+		switch self.Role {
+			case engine.RoleDefender:
+				role = blue(self.Role.String())
+			case engine.RoleBomber:
+				role = red(self.Role.String())
+		}
+		fmt.Fprintf(&sb, "Role: %s\n", role)
+		fmt.Fprintf(&sb, "Possible roles: %d " + blue("defenders") + ", %d " + red("bombers") + "\n", numDefenders, numBombers)
 		fmt.Fprintf(&sb, "Nippers: %s\n", m.Game.Players[m.Game.Nippers].Name)
-		fmt.Fprintf(&sb, "Wires: %d\n", m.Game.Wires)
-		fmt.Fprintf(&sb, "Players:\n")
+		fmt.Fprintf(&sb, "Wires: %d/%d (%d left)\n", m.Game.Wires, n, n-m.Game.Wires)
+		fmt.Fprintf(&sb, "\nPlayers:\n")
 
 		var maxLength int
+		var playerNames []string
 		for _, player := range m.Game.Players {
-			if n := len(player.Name); n > maxLength {
+			playerName := player.Name
+			if m.Game.State != engine.StatePlaying {
+				playerName = playerName + " (" + player.Role.String() + ")"
+				switch player.Role {
+					case engine.RoleDefender:
+						playerName = blue(playerName)
+					case engine.RoleBomber:
+						playerName = red(playerName)
+				}
+			}
+			if n := len(playerName); n > maxLength {
 				maxLength = n
 			}
+			playerNames = append(playerNames, playerName)
 		}
 
 		for id, player := range m.Game.Players {
-			fmt.Fprintf(&sb, " %d. %-*s ", id+1, maxLength, player.Name)
+			fmt.Fprintf(&sb, " %d. %-*s ", id+1, maxLength, playerNames[id])
 			for i, card := range player.Cards {
-				if id != int(m.Player) {
+				if id != int(m.Player) &&  m.Game.State == engine.StatePlaying {
 					card = -1
 				}
-				if i == m.cc && id == m.pc {
-					sb.WriteString("[" + card.String() + "]")
+				cardStr := ""
+				switch card {
+					case engine.CardWire:
+						cardStr = blue(card.String())
+					case engine.CardBomb:
+						cardStr = red(card.String())
+					default:
+						cardStr = card.String()
+				}
+				if i == m.cc && id == m.pc && m.Game.State == engine.StatePlaying {
+					sb.WriteString("[" + cardStr + "]")
 				} else {
-					sb.WriteString(" " + card.String() + " ")
+					sb.WriteString(" " + cardStr+ " ")
 				}
 			}
 			sb.WriteRune('\n')
 		}
 
 		if m.Game.State == engine.StateBomberWin {
-			sb.WriteString("\nBombers win!\n")
+			sb.WriteString(red("\nBombers win!\n"))
 		}
 		if m.Game.State == engine.StateDefenderWin {
-			sb.WriteString("\nDefenders win!\n")
+			sb.WriteString(blue("\nDefenders win!\n"))
 		}
 	}
 	if m.err != nil {

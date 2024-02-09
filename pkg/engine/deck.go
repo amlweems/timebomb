@@ -35,6 +35,24 @@ func (g *Game) deck() []Card {
 	return shuffle(cards)
 }
 
+func (g *Game) RolesCount() (int, int) {
+	roles := rolesMap[len(g.Players)]
+
+	defenders := 0
+	bombers := 0
+
+	for _, role := range roles {
+		switch role {
+			case RoleDefender:
+				defenders++
+			case RoleBomber:
+				bombers++
+		}
+	}
+
+	return defenders, bombers
+}
+
 var rolesMap = map[int][]Role{
 	3: {
 		RoleDefender, RoleDefender,
